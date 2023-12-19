@@ -1,4 +1,6 @@
 class Chdig < Formula
+  include Language::Python::Virtualenv
+
   desc "Dig into ClickHouse with TUI interface"
   homepage "https://github.com/azat/chdig"
   url "https://github.com/azat/chdig/archive/refs/tags/v0.5.0.tar.gz"
@@ -11,11 +13,13 @@ class Chdig < Formula
     regex(%r{^chdig/v?(\d+(?:\.\d+)+)$}i)
   end
 
-  depends_on "pyoxidizer" => [:build]
   depends_on "python@3.11" => [:build]
   depends_on "rust" => [:build]
 
   def install
+    venv = virtualenv_create(libexec, python3)
+    venv.pip_install_and_link resource("pyoxidizer")
+
     # workaround for [1], copy pyoxidizer binary to temporary directory (since
     # sometimes pyoxidizer uses directory where binary lies for temporary data,
     # but you cannot write to under brew, you will got EPERM)
@@ -34,5 +38,7 @@ class Chdig < Formula
   test do
     # Sometimes even if the compilation is OK, binary may not work, let's try.
     system bin/"chdig", "--help"
+
+    assert_match version.to_s, shell_output("#{bin}/chdig --version")
   end
 end
